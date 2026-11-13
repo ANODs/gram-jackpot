@@ -1,0 +1,55 @@
+name = "gram-jackpot-bot"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+# Библиотека @ton/ton, которой подписываются выплаты, использует Buffer
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "node scripts/build.mjs"
+
+# Сжатый HTML виджета импортируется в бота как строка
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[[durable_objects.bindings]]
+name = "GAME"
+class_name = "Game"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Game"]
+
+[observability]
+enabled = true
+
+[vars]
+# "1" — бот создан на тестовом сервере Telegram (там виджеты работают и в группах), сеть TON тоже тестовая.
+# "0" — обычный Telegram: виджеты пока только в личке с ботом.
+TEST_ENV = "0"
+# Лесенка ставок в GRAM: по ней шагают кнопки «минус» и «плюс»
+AMOUNTS = "0.5,1,2,5,10,25,50"
+# Переводы меньше этой суммы ставкой не считаются
+MIN_STAKE = "0.1"
+# Таймер раунда в секундах: стартует, когда игроков стало двое
+ROUND_SEC = "45"
+# Ставка в последние EXTEND_SEC секунд продлевает таймер до EXTEND_SEC, но раунд не длится дольше MAX_SEC
+EXTEND_SEC = "10"
+MAX_SEC = "180"
+# Сколько секунд виджет крутит колесо и показывает победителя
+SHOW_SEC = "14"
+# Через сколько минут одинокая ставка возвращается игроку
+LONE_MIN = "20"
+# Доли с банка в процентах: автору и тем, кто привёл игроков. Победитель получает остальное.
+HOUSE_PERCENT = "2.5"
+REF_PERCENT = "2.5"
+# Реферальные уходят на кошелёк, когда накопится столько GRAM
+REF_MIN = "0.1"
+# Кошелёк автора: сюда уходит доля автора, когда свободных денег на кошельке банка набралось HOUSE_MIN GRAM.
+# RESERVE GRAM всегда остаются на кошельке банка на комиссии сети.
+AUTHOR_ADDRESS = "UQBL25Vs64NOZszedMeDZBEQvajJBCARESq9iE2DofF9xP5u"
+HOUSE_MIN = "1"
+RESERVE = "0.3"
+# Telegram id владельца: ему доступна команда /stat. Узнать свой id: /stat ответит только владельцу, id пишет setup.
+OWNER_ID = ""

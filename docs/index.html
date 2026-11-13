@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Банка — демо виджета</title>
+<meta name="description" content="Рулетка на GRAM прямо в сообщении Telegram: общий банк, шанс равен доле, победитель забирает всё. Демо с выдуманными игроками.">
+<style>
+  :root {
+    --page: #eef1f4; --ink: #10161d; --muted: #66727f; --card: #ffffff; --line: #d9dfe5;
+    --accent: #3390ec; --wall-a: #dbe7c9; --wall-b: #b9d6c8; --wall-c: #a9c9d6;
+    --bubble: #ffffff; --bubble-ink: #000000;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0b1118; --ink: #eef3f8; --muted: #8696a6; --card: #141d27; --line: #24303d;
+      --accent: #6ab3f3; --wall-a: #0e1621; --wall-b: #101b28; --wall-c: #0d1a24;
+      --bubble: #182533; --bubble-ink: #ffffff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0b1118; --ink: #eef3f8; --muted: #8696a6; --card: #141d27; --line: #24303d;
+    --accent: #6ab3f3; --wall-a: #0e1621; --wall-b: #101b28; --wall-c: #0d1a24;
+    --bubble: #182533; --bubble-ink: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 460px; margin: 0 auto; padding: 28px 16px 40px; }
+  h1 { margin: 0 0 6px; font-size: 28px; line-height: 1.15; letter-spacing: -.01em; text-wrap: balance; }
+  .lead { margin: 0 0 20px; color: var(--muted); text-wrap: pretty; }
+
+  .chat {
+    border-radius: 20px; overflow: hidden; border: 1px solid var(--line);
+    background: linear-gradient(160deg, var(--wall-a), var(--wall-b) 60%, var(--wall-c));
+  }
+  .chat-head {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--card); border-bottom: 1px solid var(--line);
+  }
+  .chat-head .pic {
+    width: 36px; height: 36px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    color: #fff; font-weight: 600; background: linear-gradient(#72d5fd, #2a9ef1);
+  }
+  .chat-head b { display: block; line-height: 1.2; }
+  .chat-head span { font-size: 13px; color: var(--muted); }
+  .feed { padding: 14px 10px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .msg { max-width: 82%; padding: 7px 11px; border-radius: 16px; background: var(--bubble); color: var(--bubble-ink); font-size: 15px; line-height: 1.35; }
+  .msg .who { display: block; font-size: 13px; font-weight: 600; color: #d669ed; }
+  .msg.bot { max-width: 100%; width: 100%; padding: 0; overflow: hidden; }
+  .msg.bot .who { padding: 7px 12px 0; color: var(--accent); }
+  .msg.bot .who i { font-style: normal; font-weight: 400; color: var(--muted); }
+  .msg.bot .cap { padding: 0 12px 8px; display: flex; gap: 8px; justify-content: space-between; align-items: flex-end; }
+  .msg.bot time { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  iframe { display: block; width: 100%; height: 480px; border: 0; }
+
+  .panel { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .panel button {
+    flex: 1 1 auto; min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); font: inherit; font-size: 15px; cursor: pointer;
+  }
+  .panel button:hover { border-color: var(--accent); }
+  .panel button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .panel button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .note { margin: 18px 0 0; font-size: 14px; color: var(--muted); text-wrap: pretty; }
+  .note a { color: var(--accent); }
+  .open {
+    display: none; margin-top: 16px; min-height: 48px; border-radius: 14px; background: var(--accent); color: #fff;
+    font-weight: 600; text-decoration: none; align-items: center; justify-content: center;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Банка</h1>
+  <p class="lead">Рулетка прямо в сообщении Telegram. Игроки закидывают GRAM в общий банк, сектор на колесе равен доле в банке, колесо выбирает одного — он забирает всё. Ниже демо с выдуманными игроками, кнопки в виджете живые.</p>
+
+  <div class="chat">
+    <div class="chat-head">
+      <div class="pic">Б</div>
+      <div><b>Банка</b><span>бот</span></div>
+    </div>
+    <div class="feed">
+      <div class="msg bot">
+        <iframe id="frame" title="Виджет «Банка»"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button id="join">Ставка игрока</button>
+    <button id="draw">Крутить сейчас</button>
+    <button id="auto" aria-pressed="true">Авто</button>
+    <button id="lang">EN</button>
+    <button id="theme">Тема</button>
+  </div>
+
+  <a class="open" id="open">Открыть бота в Telegram</a>
+  <p class="note">В Telegram ставка уходит переводом GRAM через встроенный кошелёк, а выигрыш приходит на него же сразу после розыгрыша. Победителю достаётся 95% банка, 2,5% получают те, кто привёл игроков, 2,5% — автор. Здесь переводы ненастоящие.</p>
+</main>
+
+<!-- Заглушка TelegramWidget для iframe: играет роль бота и клиента Telegram -->
+<script type="text/plain" id="mock">
+const THEMES = {
+  light: { bg_color: '#ffffff', text_color: '#000000', hint_color: '#8e8e93', link_color: '#3390ec', button_color: '#3390ec', button_text_color: '#ffffff', secondary_bg_color: '#f1f1f4' },
+  dark: { bg_color: '#182533', text_color: '#ffffff', hint_color: '#7d8e9e', link_color: '#6ab3f3', button_color: '#5288c1', button_text_color: '#ffffff', secondary_bg_color: '#0e1621' },
+};
+const NAMES = ['Катя', 'Игорь', 'Дима', 'Оля', 'Ника', 'Rustam', 'Саша', 'Лиза', 'Марк', 'Vera', 'Аня', 'Давид', 'Макс', 'Lena'];
+const ME = 2, SHOWN = 6, ROUND = 16, SHOW = 13;
+const handlers = {};
+const now = () => Math.floor(Date.now() / 1000);
+let round = 1, stakes = [], deadline = 0, win = null, last = null, timer;
+
+const view = () => {
+  const sorted = [...stakes].sort((a, b) => b[2] - a[2]);
+  const shown = sorted.slice(0, SHOWN);
+  if (win && !shown.some((s) => s[0] === win[0])) shown[SHOWN - 1] = sorted.find((s) => s[0] === win[0]);
+  const rest = sorted.filter((s) => !shown.includes(s));
+  return { shown, rest: [rest.length, Math.round(rest.reduce((sum, s) => sum + s[2], 0) * 100) / 100] };
+};
+const pot = () => Math.round(stakes.reduce((sum, s) => sum + s[2], 0) * 100) / 100;
+const state = () => {
+  const v = view();
+  const d = { i: round, e: win ? 0 : deadline, c: now(), t: pot(), p: v.shown.map((s) => [s[0], s[1], s[2], 'demo' + s[0]]), o: v.rest, x: [0.5, 1, 2, 5, 10, 25, 50], u: 'demo_bot', h: 'a41c09e2' };
+  if (win) d.w = win;
+  else if (last) d.l = last;
+  return d;
+};
+const push = () => { TelegramWidget.publicData = JSON.stringify(state()); TelegramWidget.chatData = JSON.stringify(mine()); handlers.publicDataChanged && handlers.publicDataChanged(); };
+const mine = () => ({ s: (stakes.find((s) => s[0] === ME) || [0, 0, 0])[2] });
+
+const bet = (id, name, amount) => {
+  if (win) return;
+  const s = stakes.find((x) => x[0] === id);
+  if (s) s[2] = Math.round((s[2] + amount) * 100) / 100; else stakes.push([id, name, amount]);
+  if (stakes.length >= 2 && !deadline) { deadline = now() + ROUND; clearTimeout(timer); timer = setTimeout(draw, ROUND * 1000); }
+  push();
+};
+const draw = () => {
+  clearTimeout(timer);
+  if (win || stakes.length < 2) return;
+  const total = pot();
+  let ticket = Math.random() * total, winner = stakes[0], inside = .5;
+  for (const s of stakes) { if (ticket < s[2]) { winner = s; inside = ticket / s[2]; break; } ticket -= s[2]; }
+  win = [winner[0], 0, 0, now()];
+  const v = view(), sizes = v.shown.map((s) => s[2]), all = sizes.reduce((a, b) => a + b, 0) + v.rest[1], i = v.shown.indexOf(winner);
+  win[1] = Math.round(total * 95) / 100;
+  win[2] = Math.round((sizes.slice(0, i).reduce((a, b) => a + b, 0) + sizes[i] * (.12 + .76 * inside)) / all * 1000);
+  push();
+  timer = setTimeout(() => { last = [winner[1], win[1]]; win = null; stakes = []; deadline = 0; round++; push(); }, SHOW * 1000);
+};
+
+window.TelegramWidget = {
+  profile: 1, colorScheme: 'light', themeParams: THEMES.light, viewer: { id: ME, first_name: 'Алекс' }, isActive: true,
+  chatType: 'private', isForward: false, isPreview: false, chatData: '{"s":0}', publicData: JSON.stringify(state()),
+  HapticFeedback: { impactOccurred() {}, notificationOccurred() {}, selectionChanged() {} },
+  onEvent(type, fn) { handlers[type] = fn; }, offEvent() {}, ready() {}, watchPublicData() {},
+  openTelegramLink(url) { console.log('open', url); },
+  request(data) {
+    const result = data === 'i' ? RULES : data === 's' ? JSON.stringify({ ...state(), m: mine() }) : JSON.stringify({ messages: [{ amount: data.slice(2) }] });
+    return new Promise((ok) => setTimeout(() => ok({ result }), 250));
+  },
+  wallet: {
+    sendTransaction(tx) {
+      return new Promise((ok) => setTimeout(() => { bet(ME, 'Алекс', Number(tx.messages[0].amount)); ok({ result: OK }); }, 900));
+    },
+  },
+};
+
+let nextId = 20;
+window.demo = {
+  join() {
+    const known = stakes.filter((s) => s[0] !== ME);
+    if (known.length && Math.random() < .35) { const s = known[Math.floor(Math.random() * known.length)]; return bet(s[0], s[1], [0.5, 1, 2, 5][Math.floor(Math.random() * 4)]); }
+    bet(nextId++, NAMES[nextId % NAMES.length], [0.5, 1, 1, 2, 2, 5, 10][Math.floor(Math.random() * 7)]);
+  },
+  draw,
+  busy: () => !!win,
+  theme(name) {
+    const t = THEMES[name];
+    for (const k in t) document.documentElement.style.setProperty('--tg-theme-' + k.replace(/_/g, '-'), t[k]);
+    TelegramWidget.themeParams = t;
+    TelegramWidget.colorScheme = name;
+    handlers.themeChanged && handlers.themeChanged();
+  },
+};
+</script>
+
+<script>
+// Ник бота без @. Пока пусто, кнопка «Открыть бота» скрыта.
+const BOT = '';
+const RULES = {
+  ru: '<b>Как играть</b>Закинь GRAM в общий банк. Когда игроков двое, включается таймер, потом колесо выбирает одного: он забирает банк.<b>Шансы</b>Твой сектор равен твоей доле в банке. Больше закинул — выше шанс.<b>Кому сколько</b>Победителю 95%. 2,5% — тем, кто привёл игроков, 2,5% — автору.<b>Зови друзей</b>2,5% с каждой ставки приглашённых твои. Привёл: 3, заработано: 1.25 GRAM.<b>Честно</b>Хеш раунда a41c09e2… известен до старта. Проверка: /fair',
+  en: '<b>How to play</b>Send GRAM to the shared pot. Once there are two players a timer starts, then the wheel picks one: they take the pot.<b>Odds</b>Your sector equals your share of the pot. Send more, win more often.<b>Who gets what</b>95% to the winner. 2.5% to those who invited the players, 2.5% to the author.<b>Invite friends</b>2.5% of every bet your invitees make is yours. Invited: 3, earned: 1.25 GRAM.<b>Fair</b>The round hash a41c09e2… is known before the start. Verify: /fair',
+};
+const OK = { ru: 'Ставка в банке', en: 'Your bet is in the pot' };
+
+const frame = document.getElementById('frame');
+const root = document.documentElement;
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : systemDark.matches);
+let lang = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'ru', auto = true, win;
+
+if (BOT) {
+  const open = document.getElementById('open');
+  open.href = 'https://t.me/' + BOT;
+  open.style.display = 'flex';
+}
+
+const load = () => fetch(lang === 'en' ? 'widget.en.html' : 'widget.html').then((r) => r.text()).then((widget) => {
+  frame.srcdoc =
+    '<!doctype html><meta charset="utf-8"><style>html{background:transparent}' +
+    'body{margin:0;color:var(--tg-theme-text-color);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}</style>' +
+    '<script>const RULES=' + JSON.stringify(RULES[lang]) + ',OK=' + JSON.stringify(OK[lang]) + ';' +
+    document.getElementById('mock').textContent + ';demo.theme("' + (isDark() ? 'dark' : 'light') + '")<\/script>' +
+    widget;
+});
+frame.addEventListener('load', () => {
+  win = frame.contentWindow;
+  const box = win.document.getElementById('w');
+  // Высота пузыря следует за содержимым, как в Telegram
+  new win.ResizeObserver(() => { frame.style.height = box.offsetHeight + 'px'; }).observe(box);
+});
+setInterval(() => { if (auto && win && !document.hidden && !win.demo.busy()) win.demo.join(); }, 2400);
+
+document.getElementById('join').addEventListener('click', () => win.demo.join());
+document.getElementById('draw').addEventListener('click', () => win.demo.draw());
+const autoBtn = document.getElementById('auto');
+autoBtn.addEventListener('click', () => { auto = !auto; autoBtn.setAttribute('aria-pressed', auto); });
+const langBtn = document.getElementById('lang');
+langBtn.addEventListener('click', () => { lang = lang === 'en' ? 'ru' : 'en'; langBtn.textContent = lang === 'en' ? 'RU' : 'EN'; load(); });
+const applyTheme = () => win && win.demo.theme(isDark() ? 'dark' : 'light');
+document.getElementById('theme').addEventListener('click', () => { root.dataset.theme = isDark() ? 'light' : 'dark'; applyTheme(); });
+systemDark.addEventListener('change', applyTheme);
+load();
+</script>
+</body>
+</html>

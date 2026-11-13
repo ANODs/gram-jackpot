@@ -1,0 +1,381 @@
+<!--
+  Исходник виджета «Банка». В Telegram уходит сжатая версия (npm run build → src/widget.html).
+
+  Как он выглядит: монохром на цветах пузыря, цвет несут только игроки. Банк — колесо-кольцо: сектор игрока
+  равен его доле. В центре сумма банка и таймер. Когда таймер вышел, колесо раскручивается, щёлкает стрелкой
+  по секторам и замирает на победителе: остальные гаснут, его сектор выдвигается, сверху сыплется конфетти.
+
+  Ограничения виджетов, под которые всё написано:
+  - до 4096 байт после zlib, без сети и внешних файлов;
+  - не больше 16 «тяжёлых» элементов (opacity < 1, фильтры, размытые тени), поэтому вся живая графика
+    на одном canvas, а появление строк сделано через scale;
+  - layout читаем один раз (ширина сцены), дальше только арифметика.
+-->
+<style>
+body{margin:0;padding:0}
+#w{--e:cubic-bezier(.22,.9,.24,1);--s:cubic-bezier(.34,1.4,.64,1);--d:var(--tg-theme-hint-color);--f:rgba(128,128,128,.22);position:relative;overflow:hidden;padding:8px 12px;font-size:15px;line-height:1.3}
+svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
+
+/* Сцена: колесо на canvas, поверх него в центре сумма банка и строка под ней */
+#q{position:relative;height:216px}
+#c{position:absolute;left:0;top:0;width:100%;height:216px}
+#o{position:absolute;left:0;right:0;top:84px;text-align:center;pointer-events:none}
+#t{font-size:29px;font-weight:700;line-height:34px;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+#d{font-size:13px;color:var(--d)}
+.z{animation:bu .5s}
+@keyframes bu{35%{scale:1.2}}
+.g{color:#f2ab27}
+
+/* Игроки. Строка 32px; место — это transform, поэтому перестановка при обгоне плавная */
+#l{position:relative;margin-top:4px;transition:height .5s var(--e)}
+.p{position:absolute;left:0;right:0;top:0;height:32px;border-radius:16px;transition:transform .5s var(--e),background .3s;animation:in .5s var(--s) backwards}
+@keyframes in{from{scale:0}}
+.me,.win{background:var(--f)}
+.o{position:absolute;left:4px;top:4px;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:600;line-height:24px;text-align:center;color:#fff}
+.n{position:absolute;left:36px;right:120px;line-height:32px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .n{color:#f2ab27;font-weight:600}
+.k{position:absolute;right:58px;line-height:32px;font-size:13px;color:var(--d);font-variant-numeric:tabular-nums}
+.a{position:absolute;right:10px;line-height:32px;font-weight:600;font-variant-numeric:tabular-nums}
+.hit .o{animation:bu .6s}
+
+.b{position:relative;display:flex;gap:6px;margin-top:8px}
+button{flex:1;position:relative;height:40px;margin:0;padding:0;border:0;border-radius:20px;font:600 15px system-ui;color:var(--tg-theme-text-color);background:var(--f);transition:scale .25s var(--s);animation:in .5s var(--s) backwards}
+button:active{scale:.94}
+/* Пока идёт перевод, на кнопке вместо суммы крутится кольцо */
+button.ld{color:transparent;pointer-events:none}
+.sp{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-10px;border:2px solid var(--tg-theme-bg-color);border-top-color:transparent;border-radius:50%}
+.pr{color:var(--tg-theme-bg-color);background:var(--tg-theme-text-color)}
+.go{flex:3}
+.sh{flex:none;width:40px}
+.sh svg{position:absolute;left:10px;top:10px;width:20px;height:20px}
+#s{position:relative;min-height:16px;margin:6px 64px 0 2px;font-size:12px;color:var(--d)}
+/* Правила: лист выезжает снизу поверх виджета и закрывается тапом. Он вне сцены, поэтому обновления игры его не закрывают */
+#i{position:absolute;left:0;right:0;top:0;bottom:0;z-index:5;padding:4px 14px;font-size:13px;background:var(--tg-theme-bg-color);transform:translateY(105%);transition:transform .45s var(--e)}
+#i.on{transform:none}
+#i b{display:block;margin-top:8px;font-size:15px}
+
+</style>
+
+<div id="w">
+  <div id="q">
+    <canvas id="c"></canvas>
+    <div id="o"><div id="t"></div><div id="d"></div></div>
+  </div>
+  <div id="l"></div>
+  <div class="b" id="b"></div>
+  <div id="s"></div>
+  <div id="i"></div>
+</div>
+
+<script>
+(() => {
+  const W = TelegramWidget, D = document, M = Math, H = W.HapticFeedback;
+  const $ = (id) => D.getElementById(id);
+  const GEM = '<svg viewBox="0 0 24 24"><path d="M7 4h10l5 6-10 11L2 10zM2 10h20M12 21L8 10l2-6m4 0l2 6-4 11"/></svg> ';
+  const TAU = 6.2832, R = 96, IN = 68, CY = 112, ROW = 32;
+  const C = $('c'), G = C.getContext('2d'), L = $('l'), S = $('s'), T = $('t'), Dd = $('d'), I = $('i');
+
+  const me = W.viewer && W.viewer.id, by = {};
+  let CX = 0, secs = [], bits = [], waves = [], state = { c: 0, t: 0, x: [], o: [0, 0] }, my = 0, off = 0, first = true;
+  let rot = 0, spin, res, spun, kick = 0, notch, tickAt = 0, pot = 0, left, cap, note, amount = 1, go, busy, key;
+
+  const el = (cls, text, parent, tag) => {
+    const e = D.createElement(tag || 'div');
+    e.className = cls;
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  // Живых таймеров может быть не больше 64: при переполнении выполняем сразу
+  const later = (fn, ms) => { try { setTimeout(fn, ms); } catch { fn(); } };
+  const fmt = (n) => +n.toFixed(2) + '';
+  const flash = (e, cls) => { e.classList.remove(cls); later(() => e.classList.add(cls), 20); };
+  const hue = (id) => id * 47 % 360;
+
+  // Кусок кольца от угла a до угла b
+  const ring = (a, b, color, outer, inner) => {
+    G.fillStyle = color;
+    G.beginPath();
+    G.arc(CX, CY, outer, a, b);
+    G.arc(CX, CY, inner || IN, b, a, true);
+    G.fill();
+  };
+
+  // Конфетти из центра колеса в цветах игроков
+  const confetti = () => {
+    for (let i = 0; i < 80; i++) bits.push({ x: CX, y: CY, vx: (M.random() - .5) * 11, vy: -M.random() * 9 - 2, c: `hsl(${hue(secs[i % secs.length].id) + i},90%,60%)` });
+  };
+
+  // Кадр: колесо, стрелка, таймер-дуга, волны от ставок, конфетти и надписи в центре
+  const frame = () => {
+    const now = Date.now(), ink = W.themeParams.text_color;
+    if (!CX) {
+      // Ширину сцены читаем, пока она не станет известна, и больше layout не трогаем.
+      // Canvas вдвое плотнее экрана, рисуем в его CSS-пикселях
+      CX = C.offsetWidth / 2;
+      C.width = CX * 4;
+      C.height = 432;
+      G.scale(2, 2);
+      G.textAlign = 'center';
+      G.textBaseline = 'middle';
+      G.font = '600 15px system-ui';
+    }
+    G.clearRect(0, 0, CX * 2, 216);
+
+    if (spin) {
+      // Раскрутка с долгим выбегом; в конце колесо встаёт ровно туда, куда сказал бот
+      const p = M.min(1, (now - spin.t) / 6500);
+      rot = spin.a + (spin.b - spin.a) * (1 - (1 - p) ** 4);
+      if (p === 1) {
+        spin = 0;
+        res = state.w[0];
+        confetti();
+        res === me ? H.notificationOccurred('success') : H.impactOccurred('heavy');
+        by[res].p.classList.add('win');
+      }
+    } else if (!res) rot += .003;
+
+    // Стрелка щёлкает на каждой двенадцатой части оборота
+    const n = M.floor(rot / .5236);
+    if (n !== notch) {
+      notch = n;
+      if (spin) {
+        kick = 1;
+        if (now - tickAt > 100) { tickAt = now; H.selectionChanged(); }
+      }
+    }
+    kick *= .86;
+
+    ring(0, TAU, 'rgba(128,128,128,.22)', R);
+    let a = rot;
+    for (const s of secs) {
+      s.v += (s.to - s.v) * .14;
+      const b = a + s.v * TAU, gap = M.min(.02, s.v * 1.5), mid = (a + b) / 2;
+      G.globalAlpha = res && s.id !== res ? .2 : 1;
+      // Сектор победителя выдвигается и дышит
+      ring(a + gap, b - gap, s.col, s.id === res ? R + 5 + 2 * M.sin(now / 180) : R);
+      if (s.v > .07) {
+        G.fillStyle = '#fff';
+        G.fillText(s.ch, CX + M.cos(mid) * 82, CY + M.sin(mid) * 82);
+      }
+      a = b;
+    }
+    G.globalAlpha = .16;
+    ring(0, TAU, '#fff', IN + 5);
+
+    // Волна от новой ставки: кольцо цвета игрока расходится от колеса
+    waves = waves.filter((w) => now - w.t < 700);
+    for (const w of waves) {
+      const p = (now - w.t) / 700;
+      G.globalAlpha = 1 - p;
+      ring(0, TAU, w.c, R + 4 + p * 14, R + 1 + p * 14);
+    }
+    G.globalAlpha = 1;
+
+    // Таймер: тонкая дуга внутри кольца убывает до розыгрыша
+    const ms = state.e * 1000 - now - off;
+    if (state.e && ms > 0) {
+      cap = M.max(cap || 0, ms);
+      ring(-TAU / 4, -TAU / 4 + TAU * ms / cap, ink, IN - 4, IN - 7);
+    } else cap = 0;
+
+    // Стрелка сверху; от щелчка отклоняется и возвращается
+    G.save();
+    G.translate(CX, CY - R - 9);
+    G.rotate(-kick * .5);
+    G.fillStyle = ink;
+    G.beginPath();
+    G.moveTo(-8, 0);
+    G.lineTo(8, 0);
+    G.lineTo(0, 18);
+    G.fill();
+    G.restore();
+
+    bits = bits.filter((b) => b.y < 230);
+    for (const b of bits) {
+      b.vy += .28;
+      b.x += b.vx;
+      b.y += b.vy;
+      G.fillStyle = b.c;
+      G.fillRect(b.x, b.y, 5, 8);
+    }
+
+    // Центр: банк досчитывается, под ним таймер или подсказка; после розыгрыша — победитель и его выигрыш
+    pot += (state.t - pot) * .12;
+    const sec = M.ceil(ms / 1000);
+    let top = fmt(pot), sub = 'Стань первым';
+    if (res && by[res]) {
+      top = by[res].name;
+      sub = '+' + fmt(state.w[1]) + ' GRAM';
+    } else if (spin || state.e) {
+      sub = sec > 0 && !spin ? '0:' + (sec < 10 ? '0' : '') + sec : 'Крутим';
+      // Последние пять секунд: число вздрагивает, телефон отстукивает
+      if (sec !== left && sec > 0 && sec < 6) { flash(T, 'z'); H.impactOccurred('light'); }
+      left = sec;
+    } else if (secs[0]) sub = 'Ждём соперника';
+    else if (state.l) sub = state.l[0] + ' +' + fmt(state.l[1]);
+    if (T.textContent !== top) T.textContent = top;
+    if (Dd.textContent !== sub) Dd.textContent = sub;
+    T.className = res ? 'g' : T.className.replace('g', '');
+    requestAnimationFrame(frame);
+  };
+
+  // Нижняя строка: ссылка на правила и мой шанс; на пять секунд её занимает ответ бота
+  const foot = () => {
+    S.innerHTML = note || '<u>Подробнее о виджете</u>' + (my && state.t && !state.w ? ' · ' + M.round(my / state.t * 100) + '%' : '');
+  };
+  const say = (text) => {
+    note = text;
+    foot();
+    later(() => { note = 0; foot(); }, 5000);
+  };
+
+  // Ставка: бот присылает перевод на кошелёк банка, и кошелёк Telegram открывается поверх чата.
+  // Текст результата («ставка в банке» или «перевод в пути») тоже присылает бот.
+  const pay = () => {
+    // Кольцо вращаем по кадрам: в Telegram CSS-анимация внутри заблокированной кнопки стояла
+    go.classList.add('ld');
+    const spinner = el('sp', null, go);
+    let angle = 0;
+    const turn = () => {
+      spinner.style.transform = `rotate(${angle += 9}deg)`;
+      if (spinner.parentNode) requestAnimationFrame(turn);
+    };
+    turn();
+    busy = 1;
+    W.request('b:' + state.x[amount], { wallet: true })
+      .then((a) => W.wallet.sendTransaction(JSON.parse(a.result), 'p'))
+      .then((a) => say(a.result), (e) => say(e && e.code === 'REJECTED' ? 'Отменено' : 'Сбой. Если GRAM списан, зачислим'))
+      .then(() => { spinner.remove(); go.classList.remove('ld'); busy = 0; });
+  };
+
+  const button = (html, cls, onTap) => {
+    const b = el(cls, null, $('b'), 'button');
+    b.innerHTML = html;
+    b.addEventListener('click', onTap);
+    return b;
+  };
+
+  // Строка кнопок: минус, «закинуть N», плюс и «поделиться». Клавиатуры в виджетах нет,
+  // поэтому сумма выбирается шагами по лесенке от бота.
+  const step = (dir) => {
+    amount = M.max(0, M.min(state.x.length - 1, amount + dir));
+    go.innerHTML = 'Закинуть ' + GEM + fmt(state.x[amount]);
+  };
+  const home = () => {
+    $('b').textContent = '';
+    if (W.wallet && state.x[0]) {
+      button('−', '', () => step(-1));
+      go = button('', 'pr go', pay);
+      button('+', '', () => step(1));
+      step(0);
+    }
+    if (state.u) button('<svg viewBox="0 0 24 24"><path d="M14 5l7 6-7 6v-4c-6 0-9 2-11 6 0-7 4-10 11-10z"/></svg>', 'sh', share);
+  };
+  // Поделиться: Telegram даст выбрать чат и отправит ссылку на бота. В ней мой id,
+  // поэтому с каждой ставки пришедших по ней мне идёт доля
+  const share = () => W.openTelegramLink(`https://t.me/share/url?url=t.me/${state.u}%3Fstart=r${me}`);
+
+  // Состояние от бота:
+  // {i: раунд, e: когда крутим, c: время сервера, t: банк, p: [[id, имя, ставка, ник]], o: [ещё игроков, их сумма],
+  //  x: [лесенка ставок], u: ник бота, w: [победитель, выплата, куда встаёт стрелка, когда разыграли], l: [имя, выплата]}
+  const apply = (d, mine) => {
+    if (!d || d.c < state.c) return;
+    if (d.c > state.c) off = d.c * 1000 - Date.now();
+    if (mine) my = mine.s;
+    const players = d.o[0] ? d.p.concat([[0, '+' + d.o[0], d.o[1]]]) : d.p, seen = {};
+    const total = players.reduce((sum, p) => sum + (p[2] || .01), 0);
+
+    L.style.height = players.length * ROW + 'px';
+    secs = players.map(([id, name, stake, un], i) => {
+      let s = by[id];
+      if (!s) {
+        s = by[id] = { id, v: 0, stake: 0, at: -1, col: id ? `hsl(${hue(id)},85%,58%)` : '#889', p: el('p' + (id === me ? ' me' : ''), null, L) };
+        s.o = el('o', null, s.p);
+        s.n = el('n', null, s.p);
+        s.k = el('k', null, s.p);
+        s.a = el('a', null, s.p);
+        s.o.style.background = s.col;
+        // Нажатие на игрока открывает его профиль, если у него есть ник
+        s.p.addEventListener('click', () => s.un && W.openTelegramLink('https://t.me/' + s.un));
+        s.p.style.animationDelay = (first ? i * 60 : 0) + 'ms';
+      }
+      seen[id] = 1;
+      s.un = un;
+      s.name = name;
+      s.ch = [...name][0].toUpperCase();
+      s.to = (stake || .01) / total;
+      if (s.at !== i) s.p.style.transform = `translateY(${(s.at = i) * ROW}px)`;
+      s.o.textContent = s.ch;
+      s.n.textContent = name;
+      s.k.textContent = fmt(stake);
+      s.a.textContent = M.round(s.to * 100) + '%';
+      if (stake > s.stake && !first) {
+        // Новая ставка: волна от колеса, шар в строке подпрыгивает
+        waves.push({ t: Date.now(), c: s.col });
+        flash(s.p, 'hit');
+        H.impactOccurred('soft');
+      }
+      s.stake = stake;
+      return s;
+    });
+    for (const id in by) {
+      if (seen[id]) continue;
+      by[id].p.remove();
+      delete by[id];
+    }
+
+    if (!d.w) res = spin = 0;
+    else if (spun !== d.i) {
+      spun = d.i;
+      // Стрелка стоит сверху: туда должен приехать угол победной точки
+      const end = -TAU / 4 - d.w[2] / 1000 * TAU;
+      for (const s of secs) s.v = s.to;
+      // Свежий розыгрыш крутим; если виджет открыли позже, сразу показываем итог
+      if (d.c - d.w[3] < 8 && !first) spin = { t: Date.now(), a: rot, b: end + TAU * M.ceil((rot - end) / TAU + 5) };
+      else {
+        rot = end;
+        res = d.w[0];
+        by[res].p.classList.add('win');
+      }
+    }
+
+    state = d;
+    foot();
+    const k = d.x + d.u + !!W.wallet;
+    if (k !== key) {
+      key = k;
+      home();
+    }
+    first = false;
+  };
+
+  const read = () => {
+    try { apply(JSON.parse(W.publicData), JSON.parse(W.chatData || 0)); } catch {}
+  };
+  // Фоновые запросы разрешены только в личке с ботом и не чаще раза в пять секунд: там состояние подтягиваем сами
+  const poll = () => {
+    if (W.chatType === 'private' && W.isActive !== false && !busy) {
+      W.request('s').then((a) => { const d = JSON.parse(a.result); apply(d, d.m); }, () => {});
+    }
+    later(poll, 5200);
+  };
+
+  // Правила присылает бот по нажатию: текст не занимает место в виджете и меняется без пересылки сообщения
+  S.addEventListener('click', () => W.request('i').then((a) => {
+    I.innerHTML = a.result;
+    I.className = 'on';
+    $('w').style.minHeight = '340px';
+  }, () => {}));
+  I.addEventListener('click', () => {
+    I.className = '';
+    $('w').style.minHeight = '';
+  });
+  W.onEvent('publicDataChanged', read);
+  W.onEvent('chatDataChanged', read);
+  read();
+  frame();
+  poll();
+  W.ready();
+})();
+</script>
