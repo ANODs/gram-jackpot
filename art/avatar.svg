@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+  <!-- Аватар бота в стиле Telegram: голубой градиент, белая плитка, на ней колесо банка с гранёным камнем GRAM в центре.
+       Тот же приём, что у аватаров Widgets Store и Gram Donations, чтобы боты смотрелись одной семьёй. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#41C0F5"/>
+      <stop offset="1" stop-color="#1A8AD0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.28" cy="0.2" r="0.75">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFD75E"/>
+      <stop offset="1" stop-color="#F7A928"/>
+    </linearGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#0B4F7E" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="640" height="640" fill="url(#bg)"/>
+  <rect width="640" height="640" fill="url(#glow)"/>
+  <rect x="140" y="140" width="360" height="360" rx="98" fill="#ffffff" filter="url(#sh)"/>
+  <!-- колесо: четыре сектора, длина окружности радиуса 112 равна 703.7; между секторами зазор -->
+  <g fill="none" stroke-width="44" transform="rotate(-90 320 326)">
+    <circle cx="320" cy="326" r="112" stroke="#37AEE2" stroke-dasharray="302 401.7" stroke-dashoffset="-8"/>
+    <circle cx="320" cy="326" r="112" stroke="url(#gold)" stroke-dasharray="160 543.7" stroke-dashoffset="-326"/>
+    <circle cx="320" cy="326" r="112" stroke="#1A8AD0" stroke-dasharray="118 585.7" stroke-dashoffset="-502"/>
+    <circle cx="320" cy="326" r="112" stroke="#8FDAFA" stroke-dasharray="60 643.7" stroke-dashoffset="-636"/>
+  </g>
+  <!-- стрелка сверху -->
+  <path d="M294 172h52l-26 46z" fill="#0F5F96"/>
+  <!-- камень GRAM в центре -->
+  <g transform="translate(320 328) scale(5.6) translate(-12 -12.5)">
+    <path d="M2 10 7 4h3l-2 6z" fill="#5CC4F2"/>
+    <path d="M10 4h4l2 6H8z" fill="#8FDAFA"/>
+    <path d="M14 4h3l5 6h-6z" fill="#41B4EA"/>
+    <path d="M2 10h6l4 11z" fill="#2A9FDD"/>
+    <path d="M8 10h8l-4 11z" fill="#37AEE2"/>
+    <path d="M16 10h6L12 21z" fill="#1A8AD0"/>
+  </g>
+</svg>
