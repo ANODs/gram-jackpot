@@ -1,4 +1,4 @@
-// Сквозная проверка воркера на заглушках Telegram и toncenter
+// Сквозная проверка воркера на заглушках Telegram и toncenter. Запуск: wrangler dev --port 8798 с TG_API и TON_API на localhost:8799 и секретами в .dev.vars, затем node scripts/e2e.mjs
 import http from 'node:http';
 import { Cell, loadMessage, loadMessageRelaxed, Address } from '@ton/core';
 const calls = [], txs = []; let seqno = 0, balance = 0; const bocs = [];
