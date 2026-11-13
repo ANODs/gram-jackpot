@@ -129,7 +129,7 @@ const state = () => {
   return d;
 };
 const push = () => { TelegramWidget.publicData = JSON.stringify(state()); TelegramWidget.chatData = JSON.stringify(mine()); handlers.publicDataChanged && handlers.publicDataChanged(); };
-const mine = () => ({ s: (stakes.find((s) => s[0] === ME) || [0, 0, 0])[2] });
+const mine = () => ({ s: (stakes.find((s) => s[0] === ME) || [0, 0, 0])[2], a: 0 });
 
 const bet = (id, name, amount) => {
   if (win) return;
@@ -157,9 +157,9 @@ window.TelegramWidget = {
   chatType: 'private', isForward: false, isPreview: false, chatData: '{"s":0}', publicData: JSON.stringify(state()),
   HapticFeedback: { impactOccurred() {}, notificationOccurred() {}, selectionChanged() {} },
   onEvent(type, fn) { handlers[type] = fn; }, offEvent() {}, ready() {}, watchPublicData() {},
-  openTelegramLink(url) { console.log('open', url); },
+  openTelegramLink(url) { console.log('open', url); parent.postMessage({ opened: url }, '*'); },
   request(data) {
-    const result = data === 'i' ? RULES : data === 's' ? JSON.stringify({ ...state(), m: mine() }) : JSON.stringify({ messages: [{ amount: data.slice(2) }] });
+    const result = data === 'i' ? RULES : data === 'r' ? LINKED : data === 's' ? JSON.stringify({ ...state(), m: mine() }) : JSON.stringify({ messages: [{ amount: data.slice(2) }] });
     return new Promise((ok) => setTimeout(() => ok({ result }), 250));
   },
   wallet: {
@@ -196,6 +196,7 @@ const RULES = {
   en: '<b>Share it, earn 2.5%</b>Send the pot to a friend or a chat: 2.5% of every bet made by people who came from you is yours. Invited: 3, earned: 1.25 GRAM.<b>How to play</b>Send GRAM to the shared pot. Once there are two players a timer starts, then the wheel picks one: they take the pot.<b>Odds</b>Your sector equals your share of the pot. Send more, win more often.<b>Who gets what</b>95% to the winner, 2.5% to inviters, 2.5% to the author.<b>Fair</b>The round hash a41c09e2… is known before the start. Verify: /fair',
 };
 const OK = { ru: 'Ставка в банке', en: 'Your bet is in the pot' };
+const LINKED = { ru: 'Кошелёк привязан. Жми ещё раз', en: 'Wallet linked. Tap again' };
 
 const frame = document.getElementById('frame');
 const root = document.documentElement;
@@ -213,7 +214,7 @@ const load = () => fetch(lang === 'en' ? 'widget.en.html' : 'widget.html').then(
   frame.srcdoc =
     '<!doctype html><meta charset="utf-8"><style>html{background:transparent}' +
     'body{margin:0;color:var(--tg-theme-text-color);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}</style>' +
-    '<script>const RULES=' + JSON.stringify(RULES[lang]) + ',OK=' + JSON.stringify(OK[lang]) + ';' +
+    '<script>const RULES=' + JSON.stringify(RULES[lang]) + ',OK=' + JSON.stringify(OK[lang]) + ',LINKED=' + JSON.stringify(LINKED[lang]) + ';' +
     document.getElementById('mock').textContent + ';demo.theme("' + (isDark() ? 'dark' : 'light') + '")<\/script>' +
     widget;
 });

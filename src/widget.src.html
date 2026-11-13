@@ -77,7 +77,7 @@ button.ld{color:transparent;pointer-events:none}
 
   const me = W.viewer && W.viewer.id, by = {};
   let CX = 0, secs = [], bits = [], waves = [], state = { c: 0, t: 0, x: [], o: [0, 0] }, my = 0, off = 0, first = true;
-  let rot = 0, spin, res, spun, kick = 0, notch, tickAt = 0, pot = 0, left, cap, note, amount = 1, go, busy, key;
+  let rot = 0, spin, res, spun, kick = 0, notch, tickAt = 0, pot = 0, left, cap, note, amount = 1, go, sb, linked, busy, key;
 
   const el = (cls, text, parent, tag) => {
     const e = D.createElement(tag || 'div');
@@ -160,8 +160,6 @@ button.ld{color:transparent;pointer-events:none}
       }
       a = b;
     }
-    G.globalAlpha = .16;
-    ring(0, TAU, '#fff', IN + 5);
 
     // Волна от новой ставки: кольцо цвета игрока расходится от колеса
     waves = waves.filter((w) => now - w.t < 700);
@@ -270,24 +268,35 @@ button.ld{color:transparent;pointer-events:none}
       button('+', '', () => step(1));
       step(0);
     }
-    if (state.u) button('<svg viewBox="0 0 24 24"><path d="M14 5l7 6-7 6v-4c-6 0-9 2-11 6 0-7 4-10 11-10z"/></svg>', 'sh', share);
+    if (state.u) sb = button('<svg viewBox="0 0 24 24"><path d="M14 5l7 6-7 6v-4c-6 0-9 2-11 6 0-7 4-10 11-10z"/></svg>', 'sh', share);
   };
-  // Поделиться: Telegram даст выбрать чат и отправит ссылку на бота. В ней мой id,
-  // поэтому с каждой ставки пришедших по ней мне идёт доля
-  const share = () => W.openTelegramLink(`https://t.me/share/url?url=t.me/${state.u}%3Fstart=r${me}`);
+  // Поделиться. В ссылке мой id, поэтому с каждой ставки пришедших по ней мне идёт доля. Чтобы было куда её
+  // платить, первое касание отдаёт боту адрес моего кошелька (без перевода), кнопка загорается, и второе касание
+  // открывает выбор чата. Одно касание разрешает один вызов, поэтому их два. Если кошелёк уже известен, хватает одного.
+  const share = () => {
+    if (linked) return W.openTelegramLink(`https://t.me/share/url?url=t.me/${state.u}%3Fstart=r${me}`);
+    W.request('r', { wallet: true }).then((a) => say(a.result), () => {}).then(() => {
+      linked = 1;
+      sb.className = 'pr sh';
+    });
+  };
 
   // Состояние от бота:
   // {i: раунд, e: когда крутим, c: время сервера, t: банк, p: [[id, имя, ставка, ник]], o: [ещё игроков, их сумма],
   //  x: [лесенка ставок], u: ник бота, w: [победитель, выплата, куда встаёт стрелка, когда разыграли], l: [имя, выплата]}
+  // и лично мне: {s: моя ставка, a: 1 — мой кошелёк боту уже известен}
   const apply = (d, mine) => {
     if (!d || d.c < state.c) return;
     if (d.c > state.c) off = d.c * 1000 - Date.now();
-    if (mine) my = mine.s;
+    if (mine) {
+      my = mine.s;
+      linked = linked || mine.a;
+    }
     const players = d.o[0] ? d.p.concat([[0, '+' + d.o[0], d.o[1]]]) : d.p, seen = {};
     const total = players.reduce((sum, p) => sum + (p[2] || .01), 0);
 
     L.style.height = players.length * ROW + 'px';
-    secs = players.map(([id, name, stake, un], i) => {
+    secs = players.map(([id, name, stake], i) => {
       let s = by[id];
       if (!s) {
         s = by[id] = { id, v: 0, stake: 0, at: -1, col: id ? `hsl(${hue(id)},85%,58%)` : '#889', p: el('p' + (id === me ? ' me' : ''), null, L) };
@@ -296,12 +305,9 @@ button.ld{color:transparent;pointer-events:none}
         s.k = el('k', null, s.p);
         s.a = el('a', null, s.p);
         s.o.style.background = s.col;
-        // Нажатие на игрока открывает его профиль, если у него есть ник
-        s.p.addEventListener('click', () => s.un && W.openTelegramLink('https://t.me/' + s.un));
         s.p.style.animationDelay = (first ? i * 60 : 0) + 'ms';
       }
       seen[id] = 1;
-      s.un = un;
       s.name = name;
       s.ch = [...name][0].toUpperCase();
       s.to = (stake || .01) / total;

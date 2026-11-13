@@ -17,13 +17,15 @@ const TEXT = {
   ru: {
     rules: '<b>Скинь в чат — получай 2,5%</b>Поделись банкой с другом или в чате: 2,5% с каждой ставки тех, кто пришёл от тебя, твои. Привёл: {n}, заработано: {g} GRAM.<b>Как играть</b>Закинь GRAM в общий банк. Когда игроков двое, включается таймер, потом колесо выбирает одного: он забирает банк.<b>Шансы</b>Твой сектор равен твоей доле в банке. Больше закинул — выше шанс.<b>Кому сколько</b>Победителю 95%, 2,5% — пригласившим, 2,5% — автору.<b>Честно</b>Хеш раунда {h}… известен до старта. Проверка: /fair',
     credited: 'Ставка в банке',
+    linked: 'Кошелёк привязан. Жми ещё раз',
+    shareGo: 'Жми ещё раз, чтобы поделиться',
     onTheWay: 'Перевод в пути. Зачислим, как дойдёт',
     closed: 'Кошелёк банка не настроен',
     won: (r, sum, addr) => `🏆 <b>Банк раунда #${r} твой</b>\n\n+${sum} GRAM уже летят на <code>${addr}</code>`,
     refPaid: (sum) => `💸 Реферальные <b>${sum} GRAM</b> отправлены на твой кошелёк.`,
-    noWallet: (sum) => `🤝 Тебе начислено <b>${sum} GRAM</b> за игроков, которых ты привёл.\n\nЧтобы получать выплаты, привяжи кошелёк: открой /pot и нажми «Закинуть». Кошелёк запомнится уже по нажатию, подтверждать перевод не обязательно.`,
+    noWallet: (sum) => `🤝 Тебе начислено <b>${sum} GRAM</b> за игроков, которых ты привёл.\n\nЧтобы получать выплаты, привяжи кошелёк: открой /pot и нажми кнопку «поделиться» или «Закинуть». Кошелёк запомнится по нажатию, переводить ничего не нужно.`,
     refund: (sum) => `↩️ К тебе никто не присоединился, ставка возвращена: <b>${sum} GRAM</b> (за вычетом комиссии сети).`,
-    ref: (link, n, total, due) => `<b>Твоя ссылка</b>\n<code>${link}</code>\n\nС каждой ставки тех, кто пришёл по ней, тебе идёт 2,5%.\n\nПривёл: <b>${n}</b>\nЗаработано: <b>${total} GRAM</b>\nК выплате: <b>${due} GRAM</b>\n\nВыплата уходит сама, когда накопится {m} GRAM, на кошелёк, с которого ты ставил. Ещё не ставил? Нажми «Закинуть» в /pot: кошелёк привяжется по нажатию.`,
+    ref: (link, n, total, due) => `<b>Твоя ссылка</b>\n<code>${link}</code>\n\nС каждой ставки тех, кто пришёл по ней, тебе идёт 2,5%.\n\nПривёл: <b>${n}</b>\nЗаработано: <b>${total} GRAM</b>\nК выплате: <b>${due} GRAM</b>\n\nВыплата уходит сама, когда накопится {m} GRAM, на твой кошелёк. Он привязывается, когда ты жмёшь «поделиться» или «Закинуть» в виджете.`,
     fairHead: '<b>Проверка раундов</b>\nбилет = sha256("seed:раунд:банк") mod банк, банк в нано-GRAM. Игроки стоят в порядке первой ставки.\n',
     fairNow: (r, h) => `\n<b>#${r}</b> идёт\nхеш <code>${h}</code>`,
     fairRow: (r) => `\n<b>#${r.id}</b> банк ${gram(r.pot)} GRAM · билет ${r.ticket}\nхеш <code>${r.hash}</code>\nseed <code>${r.seed}</code>`,
@@ -33,13 +35,15 @@ const TEXT = {
   en: {
     rules: '<b>Share it, earn 2.5%</b>Send the pot to a friend or a chat: 2.5% of every bet made by people who came from you is yours. Invited: {n}, earned: {g} GRAM.<b>How to play</b>Send GRAM to the shared pot. Once there are two players a timer starts, then the wheel picks one: they take the pot.<b>Odds</b>Your sector equals your share of the pot. Send more, win more often.<b>Who gets what</b>95% to the winner, 2.5% to inviters, 2.5% to the author.<b>Fair</b>The round hash {h}… is known before the start. Verify: /fair',
     credited: 'Your bet is in the pot',
+    linked: 'Wallet linked. Tap again',
+    shareGo: 'Tap again to share',
     onTheWay: 'Transfer is on its way. We will add it once it arrives',
     closed: 'The pot wallet is not set up',
     won: (r, sum, addr) => `🏆 <b>The pot of round #${r} is yours</b>\n\n+${sum} GRAM are on their way to <code>${addr}</code>`,
     refPaid: (sum) => `💸 Referral <b>${sum} GRAM</b> sent to your wallet.`,
-    noWallet: (sum) => `🤝 You earned <b>${sum} GRAM</b> from players you invited.\n\nTo receive payouts, link a wallet: open /pot and tap Bet. The wallet is remembered on the tap itself, you do not have to confirm the transfer.`,
+    noWallet: (sum) => `🤝 You earned <b>${sum} GRAM</b> from players you invited.\n\nTo receive payouts, link a wallet: open /pot and tap the share button or Bet. The wallet is remembered on the tap, no transfer needed.`,
     refund: (sum) => `↩️ Nobody joined you, so the bet is refunded: <b>${sum} GRAM</b> (minus the network fee).`,
-    ref: (link, n, total, due) => `<b>Your link</b>\n<code>${link}</code>\n\nYou get 2.5% of every bet made by people who came through it.\n\nInvited: <b>${n}</b>\nEarned: <b>${total} GRAM</b>\nDue: <b>${due} GRAM</b>\n\nThe payout goes out by itself once it reaches {m} GRAM, to the wallet you bet from. No bets yet? Tap Bet in /pot: the wallet is linked on the tap.`,
+    ref: (link, n, total, due) => `<b>Your link</b>\n<code>${link}</code>\n\nYou get 2.5% of every bet made by people who came through it.\n\nInvited: <b>${n}</b>\nEarned: <b>${total} GRAM</b>\nDue: <b>${due} GRAM</b>\n\nThe payout goes out by itself once it reaches {m} GRAM, to your wallet. It is linked when you tap the share button or Bet in the widget.`,
     fairHead: '<b>Round verification</b>\nticket = sha256("seed:round:pot") mod pot, pot in nano-GRAM. Players are ordered by their first bet.\n',
     fairNow: (r, h) => `\n<b>#${r}</b> in progress\nhash <code>${h}</code>`,
     fairRow: (r) => `\n<b>#${r.id}</b> pot ${gram(r.pot)} GRAM · ticket ${r.ticket}\nhash <code>${r.hash}</code>\nseed <code>${r.seed}</code>`,
@@ -99,7 +103,7 @@ async function route(update, env) {
 }
 
 // Таблицы:
-//   users    id, name, username, lang, ref (кто привёл), addr (кошелёк для выплат), due (реферальные к выплате), earned (реферальные за всё время)
+//   users    id, name, username, lang, ref (кто привёл), addr (кошелёк для выплат: из «поделиться» или ставки), due (реферальные к выплате), earned (реферальные за всё время)
 //   chats    последнее сообщение с виджетом в каждом чате: его данные правим при каждом событии; ref — кто принёс банку в группу
 //   rounds   id, hash, seed, status (open — ждём игроков, run — идёт таймер, done — разыгран, refund — ставка возвращена), deadline, pot, winner, ticket, land, payout, ended
 //   stakes   ставки раунда: round, user, amount, at (первая ставка)
@@ -428,7 +432,8 @@ export class Game extends DurableObject {
 
   chatData(userId, stakes) {
     const mine = stakes.find((s) => s.user === userId);
-    return JSON.stringify({ s: mine ? gram(mine.amount) : 0 });
+    const known = this.one('SELECT addr FROM users WHERE id = ?', userId)?.addr;
+    return JSON.stringify({ s: mine ? gram(mine.amount) : 0, a: known ? 1 : 0 });
   }
 
   // Отправляет в чат сообщение с виджетом: без подписи и кнопок, только сам виджет
@@ -504,6 +509,12 @@ export class Game extends DurableObject {
       const me = this.one('SELECT earned FROM users WHERE id = ?', from.id);
       const invited = this.one('SELECT COUNT(*) AS n FROM users WHERE ref = ?', from.id).n;
       return answer(t.rules.replace('{h}', round.hash.slice(0, 8)).replace('{n}', invited).replace('{g}', gram(me?.earned || 0)));
+    }
+
+    // Первое касание «поделиться»: виджет отдаёт адрес кошелька, на него пойдут реферальные
+    if (kind === 'data' && q.data === 'r') {
+      if (q.type.wallet_card?.address) this.setAddr(from.id, q.type.wallet_card.address, false);
+      return answer(this.one('SELECT addr FROM users WHERE id = ?', from.id)?.addr ? t.linked : t.shareGo);
     }
 
     if (kind === 'data' && q.data.startsWith('b:')) {
