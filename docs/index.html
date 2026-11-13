@@ -98,7 +98,7 @@
   </div>
 
   <a class="open" id="open">Открыть бота в Telegram</a>
-  <p class="note">В Telegram ставка уходит переводом GRAM через встроенный кошелёк, а выигрыш приходит на него же сразу после розыгрыша. Победителю достаётся 95% банка, 2,5% получают те, кто привёл игроков, 2,5% — автор. Здесь переводы ненастоящие.</p>
+  <p class="note">В Telegram ставка уходит переводом GRAM через встроенный кошелёк, а выигрыш приходит на него же сразу после розыгрыша. Скинул банку другу или в чат — получаешь 2,5% с каждой ставки тех, кто пришёл от тебя. Победителю достаётся 95% банка, 2,5% — автору. Здесь переводы ненастоящие.</p>
 </main>
 
 <!-- Заглушка TelegramWidget для iframe: играет роль бота и клиента Telegram -->
@@ -192,8 +192,8 @@ window.demo = {
 // Ник бота без @. Пока пусто, кнопка «Открыть бота» скрыта.
 const BOT = 'TheGramPotBot';
 const RULES = {
-  ru: '<b>Как играть</b>Закинь GRAM в общий банк. Когда игроков двое, включается таймер, потом колесо выбирает одного: он забирает банк.<b>Шансы</b>Твой сектор равен твоей доле в банке. Больше закинул — выше шанс.<b>Кому сколько</b>Победителю 95%. 2,5% — тем, кто привёл игроков, 2,5% — автору.<b>Зови друзей</b>2,5% с каждой ставки приглашённых твои. Привёл: 3, заработано: 1.25 GRAM.<b>Честно</b>Хеш раунда a41c09e2… известен до старта. Проверка: /fair',
-  en: '<b>How to play</b>Send GRAM to the shared pot. Once there are two players a timer starts, then the wheel picks one: they take the pot.<b>Odds</b>Your sector equals your share of the pot. Send more, win more often.<b>Who gets what</b>95% to the winner. 2.5% to those who invited the players, 2.5% to the author.<b>Invite friends</b>2.5% of every bet your invitees make is yours. Invited: 3, earned: 1.25 GRAM.<b>Fair</b>The round hash a41c09e2… is known before the start. Verify: /fair',
+  ru: '<b>Скинь в чат — получай 2,5%</b>Поделись банкой с другом или в чате: 2,5% с каждой ставки тех, кто пришёл от тебя, твои. Привёл: 3, заработано: 1.25 GRAM.<b>Как играть</b>Закинь GRAM в общий банк. Когда игроков двое, включается таймер, потом колесо выбирает одного: он забирает банк.<b>Шансы</b>Твой сектор равен твоей доле в банке. Больше закинул — выше шанс.<b>Кому сколько</b>Победителю 95%, 2,5% — пригласившим, 2,5% — автору.<b>Честно</b>Хеш раунда a41c09e2… известен до старта. Проверка: /fair',
+  en: '<b>Share it, earn 2.5%</b>Send the pot to a friend or a chat: 2.5% of every bet made by people who came from you is yours. Invited: 3, earned: 1.25 GRAM.<b>How to play</b>Send GRAM to the shared pot. Once there are two players a timer starts, then the wheel picks one: they take the pot.<b>Odds</b>Your sector equals your share of the pot. Send more, win more often.<b>Who gets what</b>95% to the winner, 2.5% to inviters, 2.5% to the author.<b>Fair</b>The round hash a41c09e2… is known before the start. Verify: /fair',
 };
 const OK = { ru: 'Ставка в банке', en: 'Your bet is in the pot' };
 

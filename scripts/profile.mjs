@@ -7,14 +7,14 @@ import { pathToFileURL } from 'node:url';
 const PROFILE = {
   ru: {
     name: 'Банка',
-    short: 'Рулетка на GRAM прямо в чате: общий банк, шанс равен доле, победитель забирает всё.',
-    description: 'Банка — рулетка на GRAM прямо в сообщении.\n\n💎 Закидывай GRAM в общий банк\n🎡 Твой сектор на колесе равен твоей доле\n🏆 Колесо выбирает одного: он забирает 95% банка\n🤝 Зови друзей: 2,5% с каждой их ставки твои\n🔐 Хеш раунда известен заранее, проверка в /fair\n\nНажми «Старт», чтобы открыть банку.',
+    short: 'Рулетка на GRAM прямо в чате. Скинул другу или в чат — получаешь 2,5% с каждой игры.',
+    description: 'Банка — рулетка на GRAM прямо в сообщении.\n\n🤝 Скинь банку другу или в чат: 2,5% с каждой ставки тех, кто пришёл от тебя, твои\n💎 Закидывай GRAM в общий банк\n🎡 Твой сектор на колесе равен твоей доле\n🏆 Колесо выбирает одного: он забирает 95% банка\n🔐 Хеш раунда известен заранее, проверка в /fair\n\nНажми «Старт», чтобы открыть банку.',
     commands: [['pot', 'Открыть банку'], ['ref', 'Моя ссылка и доход'], ['fair', 'Проверить честность']],
   },
   en: {
     name: 'Gram Pot',
-    short: 'A GRAM roulette right in the chat: one shared pot, odds equal your share, winner takes all.',
-    description: 'Gram Pot is a GRAM roulette right inside a message.\n\n💎 Send GRAM to the shared pot\n🎡 Your sector on the wheel equals your share\n🏆 The wheel picks one player: they take 95% of the pot\n🤝 Invite friends: 2.5% of every bet they make is yours\n🔐 The round hash is known in advance, verify with /fair\n\nTap Start to open the pot.',
+    short: 'A GRAM roulette right in the chat. Share it with a friend or a chat and earn 2.5% of every game.',
+    description: 'Gram Pot is a GRAM roulette right inside a message.\n\n🤝 Share the pot with a friend or a chat: 2.5% of every bet made by people who came from you is yours\n💎 Send GRAM to the shared pot\n🎡 Your sector on the wheel equals your share\n🏆 The wheel picks one player: they take 95% of the pot\n🔐 The round hash is known in advance, verify with /fair\n\nTap Start to open the pot.',
     commands: [['pot', 'Open the pot'], ['ref', 'My link and earnings'], ['fair', 'Verify fairness']],
   },
 };
